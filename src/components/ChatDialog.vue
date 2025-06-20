@@ -268,7 +268,7 @@ async function send() {
     }))
 
   try {
-    const aiRes = await chatApi.chatAboutHistpryApi(apiMessages, {
+    const aiRes = await chatApi.chatWithAI(apiMessages, {
       sessionId: currentSessionId.value,
     })
 

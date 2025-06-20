@@ -149,15 +149,17 @@ onUnmounted(() => {
   uni.$off('pageShow', handlePageShow)
 })
 
-// 查看备忘录详情
+let isNavigating = false
+
 const viewMemoDetail = (memo) => {
-  console.log('查看备忘录:', memo)
-  // 跳转到详情页面
+  if (isNavigating) return
+  isNavigating = true
   uni.navigateTo({
     url: `/pages/memo/detail?id=${memo.id}`,
-    fail: (err) => {
-      console.error('跳转失败:', err)
-    },
+    complete: () => {
+      // 跳转完成后解锁
+      setTimeout(() => { isNavigating = false }, 500)
+    }
   })
 }
 
