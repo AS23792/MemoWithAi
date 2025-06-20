@@ -15,7 +15,19 @@
 Authorization: Bearer <YOUR_JWT_TOKEN>
 ```
 
-## 用户相关接口
+## 功能文档一览表
+
+实现的功能具体如下：
+
+| 分类   |      |            |                               |            |            |
+| ------ | ---- | ---------- | ----------------------------- | ---------- | ---------- |
+| 用户   | 登陆 | 注册       |                               |            |            |
+| 备忘录 |      | 创建备忘录 | 查看备忘录列表/查看指定备忘录 | 修改备忘录 | 删除备忘录 |
+| chat   |      | 新建会话   | 会话列表/详情-继续会话        |            | 删除会话   |
+
+![1750400486252](images/api/1750400486252.png)
+
+## 用户相关接口 /user
 
 ### 1. 用户注册
 
@@ -28,7 +40,7 @@ Authorization: Bearer <YOUR_JWT_TOKEN>
 {
   "username": "string",
   "password": "string",
-  "confirmPassword": "string"
+  "confirmPassword": "string" //长度必须六位以上
 }
 ```
 
@@ -95,8 +107,6 @@ Authorization: Bearer <YOUR_JWT_TOKEN>
 }
 ```
 
----
-
 ## 备忘录相关接口
 
 ### 1. 获取备忘录列表
@@ -108,6 +118,7 @@ Authorization: Bearer <YOUR_JWT_TOKEN>
 
   - `page` (number): 页码，默认 1
   - `pageSize` (number): 每页数量，默认 10
+
 - **Success Response (200 OK)**:
 
 ```json
@@ -232,6 +243,10 @@ Authorization: Bearer <YOUR_JWT_TOKEN>
 ---
 
 ## AI 聊天相关接口
+
+#### 前端实现的功能：做一个会话交互功能，后端调用星火 API 接口进行存储。为了保证上下文，需要将历史信息都发送给后端，由后端进行统一处理发送给星火接口。
+
+#### 如果选中历史会话，继续会话的时候 需要拿到所有的历史会话，携带着当前最新的用户 props。
 
 ### 1. 发送消息（创建或继续会话）
 
@@ -396,7 +411,6 @@ Authorization: Bearer <YOUR_JWT_TOKEN>
 
 ## 错误码说明
 
-
 | 错误码 | 说明             |
 | ------ | ---------------- |
 | 200    | 请求成功         |
@@ -407,83 +421,11 @@ Authorization: Bearer <YOUR_JWT_TOKEN>
 | 404    | 资源不存在       |
 | 500    | 服务器内部错误   |
 
----
-
-## 前端调用示例
-
-### 使用封装的 API 方法
-
-```javascript
-import { userApi, memoApi, chatApi } from '@/api'
-
-// 用户登录
-const login = async () => {
-  try {
-    const result = await userApi.login('username', 'password')
-    console.log('登录成功:', result)
-  } catch (error) {
-    console.error('登录失败:', error)
-  }
-}
-
-// 获取备忘录列表
-const getMemos = async () => {
-  try {
-    const result = await memoApi.getList(1, 10)
-    console.log('备忘录列表:', result)
-  } catch (error) {
-    console.error('获取失败:', error)
-  }
-}
-
-// 发送AI消息
-const sendMessage = async () => {
-  try {
-    const messages = [{ role: 'user', content: '你好，AI！' }]
-    const result = await chatApi.chatWithAI(messages)
-    console.log('AI回复:', result)
-  } catch (error) {
-    console.error('发送失败:', error)
-  }
-}
-```
-
-### 使用 uni.request 直接调用
-
-```javascript
-// 获取聊天历史
-uni.request({
-  url: 'https://xubapwweknjk.sealosbja.site/api/chat/sessions',
-  method: 'GET',
-  header: {
-    Authorization: `Bearer ${token}`,
-  },
-  success: (res) => {
-    if (res.statusCode === 200) {
-      console.log('聊天历史:', res.data)
-    }
-  },
-  fail: (error) => {
-    console.error('请求失败:', error)
-  },
-})
-```
-
----
-
-## 注意事项
+### 注意事项
 
 1. **认证要求**: 除了注册和登录接口，其他所有接口都需要在请求头中包含有效的 JWT Token
-2. **错误处理**: 所有接口都可能返回错误，前端需要做好错误处理
+2. **错误处理**: 所有接口都可能返回错误
 3. **数据格式**: 请求和响应都使用 JSON 格式
 4. **会话管理**: AI 聊天功能支持会话管理，可以继续之前的对话
 5. **分页**: 备忘录列表接口支持分页查询
-6. **实时性**: 聊天接口基于讯飞星火大模型，响应时间取决于网络和模型处理速度
-
----
-
-## 更新日志
-
-- **v1.0.0**: 初始版本，包含用户、备忘录、AI 聊天功能
-- **v1.1.0**: 修复聊天历史接口响应格式问题
-- **v1.2.0**: 添加会话标题自动生成功能
+6. **实时性**: 聊天接口基于讯飞星火大模型，响应时间取决于网络和模型处理速度（较慢，免费版）
