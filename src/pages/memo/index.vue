@@ -197,7 +197,7 @@ const handleLogout = () => {
         // 跳转到登录页面
         setTimeout(() => {
           uni.redirectTo({
-            url: '/pages/login/login',
+            url: '/pages/login/loginAuth',
             fail: (err) => {
               console.error('跳转失败:', err)
             },
