@@ -70,5 +70,18 @@
     "uniStatistics" : {
         "enable" : false
     },
-    "vueVersion" : "3"
+    "vueVersion" : "3",
+    "h5" : {
+        "optimization" : {
+            "treeShaking" : {
+                "enable" : true
+            }
+        },
+        "title" : "CQ9415",
+        "router" : {
+            "mode" : "hash",
+            "base" : ""
+        },
+        "template" : ""
+    }
 }

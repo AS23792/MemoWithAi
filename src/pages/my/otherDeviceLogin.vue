@@ -4,7 +4,6 @@
       <view class="form-header">
         <text class="form-title">账号登录</text>
       </view>
-
       <view class="form-content">
         <view class="input-group">
           <input
@@ -52,8 +51,8 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { userApi } from '../../api/index'
-
+import { userApi } from '@/api/index'
+const emit = defineEmits(['switchToRegister'])
 // 表单数据
 const loginForm = ref({
   username: '123',
@@ -111,16 +110,6 @@ const handleLogin = async () => {
       icon: 'success',
       duration: 2000,
     })
-
-    // 延迟跳转到备忘录页面
-    setTimeout(() => {
-      uni.redirectTo({
-        url: '/pages/memo/index',
-        fail: (err) => {
-          console.error('跳转失败:', err)
-        },
-      })
-    }, 1500)
   } catch (error) {
     // 显示登录错误
     errorMessage.value = error.message || '登录失败，请重试'
@@ -132,17 +121,11 @@ const handleLogin = async () => {
     loading.value = false
   }
 }
-
-// 跳转到注册页面
+const isRegiste = ref(false)
 const goToRegister = () => {
-  uni.navigateTo({
-    url: '/pages/register/register',
-    fail: (err) => {
-      console.error('跳转失败:', err)
-    },
-  })
+  console.log('点击注册')
+  emit('switchToRegister')
 }
-
 // 跳转到忘记密码页面
 const goToForgetPassword = () => {
   uni.showToast({
@@ -159,7 +142,7 @@ const goToForgetPassword = () => {
   display: flex;
   justify-content: center;
   align-items: center;
-  background: linear-gradient(135deg, #6e8efb, #a777e3);
+  background: linear-gradient(135deg, #f28500, #fdc830);
 }
 
 .form-container {
@@ -215,7 +198,7 @@ const goToForgetPassword = () => {
 .checkbox {
   width: 36rpx;
   height: 36rpx;
-  border: 2rpx solid #a6c0fe;
+  border: 2rpx solid #fdc830;
   border-radius: 6rpx;
   margin-right: 16rpx;
   position: relative;
@@ -226,7 +209,7 @@ const goToForgetPassword = () => {
   position: absolute;
   width: 24rpx;
   height: 24rpx;
-  background-color: #a6c0fe;
+  background-color: #fdc830;
   border-radius: 4rpx;
   top: 50%;
   left: 50%;
@@ -246,7 +229,7 @@ const goToForgetPassword = () => {
 .login-btn {
   width: 100%;
   height: 90rpx;
-  background: linear-gradient(135deg, #6e8efb, #a777e3);
+  background: linear-gradient(135deg, #f28500, #fdc830);
   border-radius: 45rpx;
   color: white;
   font-size: 32rpx;
@@ -264,7 +247,7 @@ const goToForgetPassword = () => {
 }
 
 .register-text {
-  color: #a6c0fe;
+  color: #fdc830;
   display: inline;
 }
 </style>

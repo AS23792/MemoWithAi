@@ -1,9 +1,12 @@
+import { useUserStore } from '../store/user' // 新增
+
 // API基础URL
-// const BASE_URL = 'https://ekrlspkbrykg.sealosbja.site/api';//生产环境接口
-const BASE_URL = 'https://xubapwweknjk.sealosbja.site/api'; //开发环境接口
+const BASE_URL = 'https://ekrlspkbrykg.sealosbja.site/api';//生产环境接口
+// const BASE_URL = 'https://xubapwweknjk.sealosbja.site/api'; //开发环境接口
 // 获取存储的token
 const getToken = () => {
-    return uni.getStorageSync('token');
+    const userStore = useUserStore()
+    return userStore.token || uni.getStorageSync('token');
 };
 
 // 封装请求方法
@@ -79,12 +82,25 @@ export const userApi = {
     },
 
     // 用户登录
-    login: (username, password, remember = false) => {
-        return request('/user/login', 'POST', {
+    login: async (username, password, remember = false) => {
+        const userStore = useUserStore()
+        const data = await request('/user/login', 'POST', {
             username,
             password,
             remember
         });
+        // 登录成功后，存储token到pinia和本地
+        if (data && data.token) {
+            userStore.setToken(data.token)
+        }
+        return data
+    },
+
+    logout: () => {
+        const userStore = useUserStore()
+        userStore.logout()
+        uni.removeStorageSync('token')
+        uni.removeStorageSync('loginTime')
     }
 };
 
@@ -121,7 +137,15 @@ export const memoApi = {
         return request(`/memo/delete/${id}`, 'DELETE');
     }
 };
-
+function getWsUrl () {
+    // BASE_URL 形如 https://xubapwweknjk.sealosbja.site/api
+    let wsUrl = BASE_URL.replace(/^http/, 'ws'); // http/https => ws/wss
+    // 去掉 /api
+    wsUrl = wsUrl.replace(/\/api\/?$/, '');
+    // 拼接 WebSocket 路径
+    wsUrl += '/ws/chat';
+    return wsUrl;
+}
 // 聊天相关接口
 export const chatApi = {
     chatWithAI: (messages, options = {}) => {
@@ -164,6 +188,176 @@ export const chatApi = {
             });
         });
     },
+    // 流式
+    chatWithAIStream: function (messages, options = {}, onProgress) {
+        const wsUrl = getWsUrl();
+        let fullContent = '';
+        let sessionId = null;
+        let wsClosed = false;
+        const token = getToken(); // 你的 token 获取逻辑
+        console.log(`API请求: stream ${wsUrl}`, messages)
+        return new Promise((resolve, reject) => {
+            let socketTask;
+
+            // (typeof uni !== 'undefined' && typeof wx !== 'undefined' && wx.connectSocket)
+            if (process.env.UNI_PLATFORM === 'mp-weixin') {
+                // 小程序端
+                socketTask = wx.connectSocket({
+                    url: wsUrl,
+                    header: token ? { 'Authorization': 'Bearer ' + token } : {}
+                });
+                socketTask.onOpen(() => {
+                    socketTask.send({
+                        data: JSON.stringify({
+                            messages,
+                            model: options.model || 'x1',
+                            sessionId: options.sessionId || null
+                        })
+                    });
+                });
+                socketTask.onMessage((res) => {
+                    let data;
+                    try {
+                        data = JSON.parse(res.data);
+                    } catch (e) {
+                        return;
+                    }
+                    if (data.error) {
+                        reject(new Error(data.error));
+                        socketTask.close();
+                        wsClosed = true;
+                        return;
+                    }
+                    if (data.content) {
+                        fullContent += data.content;
+                        if (onProgress) onProgress(fullContent, data.content);
+                    }
+                    if (data.sessionId) {
+                        sessionId = data.sessionId;
+                    }
+                    if (data.done) {
+                        wsClosed = true;
+                        resolve({ content: fullContent, sessionId });
+                        socketTask.close();
+                    }
+                });
+                socketTask.onClose(() => {
+                    if (!wsClosed) {
+                        reject(new Error('WebSocket连接被关闭'));
+                    }
+                });
+                socketTask.onError((err) => {
+                    reject(err);
+                    socketTask.close();
+                });
+            } else if (process.env.UNI_PLATFORM === 'app' || process.env.UNI_PLATFORM === 'app-plus') {
+                //app
+                console.log('app发送请求')
+                uni.connectSocket({
+                    url: wsUrl,
+                    header: token ? { 'Authorization': 'Bearer ' + token } : {}
+                });
+                console.log('socketTask', socketTask);
+
+                uni.onSocketOpen(() => {
+                    console.log('WebSocket已连接');
+                    uni.sendSocketMessage({
+                        data: JSON.stringify({
+                            messages,
+                            model: options.model || 'x1',
+                            sessionId: options.sessionId || null
+                        })
+                    });
+                });
+                uni.onSocketMessage((res) => {
+                    let data;
+                    try {
+                        data = JSON.parse(res.data);
+                    } catch (e) {
+                        return;
+                    }
+                    if (data.error) {
+                        reject(new Error(data.error));
+                        uni.closeSocket();
+                        wsClosed = true;
+                        return;
+                    }
+                    if (data.content) {
+                        fullContent += data.content;
+                        if (onProgress) onProgress(fullContent, data.content);
+                    }
+                    if (data.sessionId) {
+                        sessionId = data.sessionId;
+                    }
+                    if (data.done) {
+                        wsClosed = true;
+                        resolve({ content: fullContent, sessionId });
+                        uni.closeSocket();
+                    }
+                });
+                uni.onSocketClose(() => {
+                    if (!wsClosed) {
+                        reject(new Error('WebSocket连接被关闭'));
+                    }
+                });
+                uni.onSocketError((err) => {
+                    reject(err);
+                    uni.closeSocket();
+                });
+            }
+            else if (process.env.UNI_PLATFORM === 'h5') {
+                // H5/Web
+                let wsUrlWithToken = wsUrl;
+                if (token) {
+                    wsUrlWithToken += (wsUrl.includes('?') ? '&' : '?') + 'token=' + encodeURIComponent(token);
+                }
+                socketTask = new WebSocket(wsUrlWithToken);
+                socketTask.onopen = () => {
+                    socketTask.send(JSON.stringify({
+                        messages,
+                        model: options.model || 'x1',
+                        sessionId: options.sessionId || null
+                    }));
+                };
+                socketTask.onmessage = (event) => {
+                    let data;
+                    try {
+                        data = JSON.parse(event.data);
+                    } catch (e) {
+                        return;
+                    }
+                    if (data.error) {
+                        reject(new Error(data.error));
+                        socketTask.close();
+                        wsClosed = true;
+                        return;
+                    }
+                    if (data.content) {
+                        fullContent += data.content;
+                        if (onProgress) onProgress(fullContent, data.content);
+                    }
+                    if (data.sessionId) {
+                        sessionId = data.sessionId;
+                    }
+                    if (data.done) {
+                        wsClosed = true;
+                        resolve({ content: fullContent, sessionId });
+                        socketTask.close();
+                    }
+                };
+                socketTask.onclose = () => {
+                    if (!wsClosed) {
+                        reject(new Error('WebSocket连接被关闭'));
+                    }
+                };
+                socketTask.onerror = (err) => {
+                    reject(err);
+                    socketTask.close();
+                };
+            }
+
+        });
+    },
     // 获取聊天会话列表
     getChatHistory: () => {
         return request('/chat/sessions');
@@ -189,25 +383,11 @@ export const chatApi = {
 
 // 微信授权相关接口
 export const authApi = {
-    // H5端：获取微信扫码二维码
-    getWxQrCode: () => {
-        return request('/auth/wx/qrcode', 'POST');
-    },
-
-    // H5端：轮询扫码状态
-    checkQrLogin: (scene) => {
-        return request(`/auth/wx/qrcode/status?scene=${scene}`);
-    },
-
     // 小程序端：微信授权登录
     wxMpLogin: (code) => {
         return request('/auth/wx/mp-login', 'POST', { code });
     },
 
-    // App端：微信授权登录
-    wxAppLogin: (code) => {
-        return request('/auth/wx/app-login', 'POST', { code });
-    }
 };
 
 export default {

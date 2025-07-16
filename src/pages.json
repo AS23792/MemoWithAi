@@ -1,51 +1,66 @@
 {
   "pages": [
     {
-      "path": "pages/login/loginAuth",
-      "style": {
-        "navigationBarTitleText": "登录",
-        "navigationStyle": "custom"
-      }
+      "path": "pages/home/home"
     },
     {
-      "path": "pages/register/register",
-      "style": {
-        "navigationBarTitleText": "注册",
-        "navigationStyle": "custom"
-      }
+      "path": "pages/search/search"
     },
     {
-      "path": "pages/memo/index",
-      "style": {
-        "navigationBarTitleText": "备忘录",
-        "navigationStyle": "custom"
-      }
+      "path": "pages/question/question"
     },
     {
-      "path": "pages/memo/detail",
-      "style": {
-        "navigationBarTitleText": "备忘录详情",
-        "navigationStyle": "custom"
-      }
+      "path": "pages/my/my"
     },
     {
-      "path": "pages/memo/create",
-      "style": {
-        "navigationBarTitleText": "新建备忘录",
-        "navigationStyle": "custom"
-      }
+      "path": "pages/my/alreadLogin"
     },
     {
-      "path": "pages/index/index",
-      "style": {
-        "navigationBarTitleText": "uni-app"
-      }
-    }
+      "path": "pages/my/notLogin"
+    },
+	{
+	  "path": "pages/my/otherDevice"
+	},
+	{
+		"path": "pages/my/otherDeviceLogin"
+	}
   ],
+  "tabBar": {
+    "color": "#b0abb3",
+    "selectedColor": "#f28500",
+    "list": [
+      {
+        "pagePath": "pages/home/home",
+        "text": "首页",
+        "iconPath": "static/tab/index.png",
+        "selectedIconPath": "static/tab/index-active.png"
+      },
+      {
+        "pagePath": "pages/search/search",
+        "text": "检索",
+        "iconPath": "static/tab/search.png",
+        "selectedIconPath": "static/tab/search-active.png",
+        "style": {
+          "enablePullDownRefresh": true
+        }
+      },
+      {
+        "pagePath": "pages/question/question",
+        "text": "AI问答",
+        "iconPath": "static/tab/question.png",
+        "selectedIconPath": "static/tab/question-active.png"
+      },
+      {
+        "pagePath": "pages/my/my",
+        "text": "我的",
+        "iconPath": "static/tab/my.png",
+        "selectedIconPath": "static/tab/my-active.png"
+      }
+    ]
+  },
   "globalStyle": {
     "navigationBarTextStyle": "black",
-    "navigationBarTitleText": "uni-app",
-    "navigationBarBackgroundColor": "#F8F8F8",
-    "backgroundColor": "#F8F8F8"
+    "navigationBarTitleText": "CQQ备忘录",
+    "navigationBarBackgroundColor": "#f28500"
   }
 }

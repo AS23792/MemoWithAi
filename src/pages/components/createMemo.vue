@@ -1,11 +1,6 @@
 <template>
   <view class="create-container">
     <view class="memo-card">
-      <!-- 返回按钮 -->
-      <view class="back-btn" @click="goBack">
-        <text class="back-icon">←</text>
-      </view>
-
       <!-- 页面标题 -->
       <view class="page-title">
         <text>新建备忘录</text>
@@ -16,11 +11,17 @@
         <input
           class="title-input"
           v-model="memo.title"
-          placeholder="请输入标题"
           maxlength="50"
-          placeholder-class="placeholder"
           type="text"
+          @focus="titleFocused = true"
+          @blur="titleFocused = false"
         />
+        <text
+          v-if="!memo.title && !titleFocused"
+          class="placeholder title-placeholder"
+        >
+          请输入标题
+        </text>
       </view>
 
       <!-- 备忘录内容输入框 -->
@@ -28,13 +29,19 @@
         <textarea
           class="content-textarea"
           v-model="memo.content"
-          placeholder="请输入内容"
           maxlength="2000"
-          placeholder-class="placeholder"
           auto-height
           cursor-spacing="20"
           show-confirm-bar="false"
+          @focus="contentFocused = true"
+          @blur="contentFocused = false"
         />
+        <text
+          v-if="!memo.content && !contentFocused"
+          class="placeholder content-placeholder"
+        >
+          请输入内容
+        </text>
       </view>
 
       <!-- 保存按钮 -->
@@ -43,17 +50,15 @@
       </view>
     </view>
   </view>
-  <!-- AI悬浮圈组件，放在根节点下，确保 fixed 定位生效 -->
-  <AIFloatButton :bottom="80" :right="40" @click="showAIFloatWindow" />
-  <ChatDialog v-model:visible="showChatDialog" />
 </template>
 
 <script setup>
 import { ref } from 'vue'
 import { memoApi } from '../../api/index'
-import AIFloatButton from '../../components/AIFloatButton.vue'
-import ChatDialog from '../../components/ChatDialog.vue'
 
+const titleFocused = ref(false)
+const contentFocused = ref(false)
+const emit = defineEmits(['success'])
 // 备忘录数据
 const memo = ref({
   title: '',
@@ -63,7 +68,6 @@ const memo = ref({
 // 状态变量
 const loading = ref(false)
 const errorMessage = ref('')
-const showChatDialog = ref(false)
 
 // 保存备忘录
 const saveMemo = async () => {
@@ -96,28 +100,9 @@ const saveMemo = async () => {
       title: '保存成功',
       icon: 'success',
       success: () => {
+        memo.value = { title: '', content: '' }
         // 触发页面刷新事件
-        uni.$emit('pageShow')
-
-        // 缩短延迟时间，让用户更快看到结果
-        setTimeout(() => {
-          uni.navigateBack({
-            success: () => {
-              console.log('成功返回备忘录列表')
-            },
-            fail: (err) => {
-              console.error('返回失败:', err)
-              // 备用方式：直接跳转到列表页面
-              uni.redirectTo({
-                url: '/pages/memo/index',
-                fail: (redirectErr) => {
-                  console.error('跳转失败:', redirectErr)
-                  uni.redirectTo({ url: '/pages/memo/index' })
-                },
-              })
-            },
-          })
-        }, 800) // 缩短到800ms
+        emit('success')
       },
     })
   } catch (error) {
@@ -130,20 +115,11 @@ const saveMemo = async () => {
     loading.value = false
   }
 }
-
-// 返回上一页
-const goBack = () => {
-  uni.navigateBack()
-}
-
-const showAIFloatWindow = () => {
-  showChatDialog.value = true
-}
 </script>
 
 <style lang="scss">
 page {
-  background-color: #b5c3ff; /* 与其他页面背景色保持一致 */
+  background-color: #b5c3ff;
 }
 
 .create-container {
@@ -163,40 +139,19 @@ page {
   padding: 40rpx 30rpx;
   box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.08);
   position: relative;
-  min-height: 85vh; /* 让卡片占据大部分屏幕高度 */
+  min-height: 85vh;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-}
-
-.back-btn {
-  position: absolute;
-  top: 20rpx;
-  left: 20rpx;
-  width: 70rpx;
-  height: 70rpx;
-  border-radius: 50%;
-  border: 2rpx solid #333;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #fff;
-  z-index: 10;
-}
-
-.back-icon {
-  font-size: 36rpx;
-  line-height: 1;
-  color: #333;
 }
 
 .page-title {
   font-size: 40rpx;
   font-weight: bold;
   color: #333;
-  margin-bottom: 70rpx; /* 增加与标题输入框的距离 */
-  padding: 0 60rpx; /* 为左侧按钮留出空间 */
-  margin-top: 40rpx; /* 为顶部的按钮留出空间 */
+  margin-bottom: 70rpx;
+  padding: 0 60rpx;
+  margin-top: 40rpx;
   text-align: center;
 }
 
@@ -204,7 +159,8 @@ page {
   margin: 20rpx 0;
   width: 100%;
   box-sizing: border-box;
-  padding: 0 10rpx; /* 增加左右内边距 */
+  padding: 0 10rpx;
+  position: relative; /* 为 placeholder 定位 */
 }
 
 .content-group {
@@ -221,7 +177,8 @@ page {
   padding: 20rpx 0;
   width: 100%;
   box-sizing: border-box;
-  height: 80rpx; /* 固定高度 */
+  height: 80rpx;
+  background: transparent;
 }
 
 .content-textarea {
@@ -229,30 +186,44 @@ page {
   color: #666;
   line-height: 1.8;
   width: 100%;
-  min-height: 400rpx; /* 设置最小高度 */
+  min-height: 500rpx;
   padding: 20rpx 0;
-  border: none; /* 移除边框 */
-  border-top: 2rpx solid #ddd; /* 只保留顶部边框 */
-  border-radius: 0; /* 移除圆角 */
+  border: none;
+  border-top: 2rpx solid #ddd;
+  border-radius: 0;
   box-sizing: border-box;
+  background: transparent;
 }
 
 .placeholder {
+  position: absolute;
   color: #999;
+  pointer-events: none;
+}
+
+.title-placeholder {
+  font-size: 34rpx;
+  top: 20rpx;
+  left: 10rpx;
+}
+
+.content-placeholder {
   font-size: 30rpx;
+  top: 20rpx;
+  left: 10rpx;
 }
 
 .save-btn {
   width: 240rpx;
   height: 80rpx;
-  background-color: #8687fd;
+  background-color: #f28500;
   color: white;
   border-radius: 40rpx;
   display: flex;
   align-items: center;
   justify-content: center;
   margin: auto auto 40rpx auto;
-  margin-top: auto; /* 将按钮推到底部 */
+  margin-top: auto;
   box-shadow: 0 6rpx 16rpx rgba(0, 0, 0, 0.1);
 }
 
