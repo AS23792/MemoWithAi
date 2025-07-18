@@ -30,6 +30,7 @@ import { useUserStore } from './store/user'
 import { computed } from 'vue'
 const userStore = useUserStore()
 const darkMode = computed(() => userStore.darkMode)
+
 </script>
 <template>
   <view :class="darkMode ? 'dark-theme' : 'light-theme'">

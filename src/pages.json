@@ -18,12 +18,12 @@
     {
       "path": "pages/my/notLogin"
     },
-	{
-	  "path": "pages/my/otherDevice"
-	},
-	{
-		"path": "pages/my/otherDeviceLogin"
-	}
+    {
+      "path": "pages/my/otherDevice"
+    },
+    {
+      "path": "pages/my/otherDeviceLogin"
+    }
   ],
   "tabBar": {
     "color": "#b0abb3",

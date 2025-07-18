@@ -1,7 +1,7 @@
 <template>
   <view class="user-center">
     <view class="user-info">
-      <image class="avatar" :src="userStore.userAvatar || defaultAvatar" />
+      <image class="avatar" :src="userStore.avatar || defaultAvatar" />
       <!-- user.avatar ||  -->
       <view class="nickname">{{ user.nickname }}</view>
     </view>
